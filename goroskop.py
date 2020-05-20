@@ -6,32 +6,35 @@ from lxml import etree
 import lxml.html
 from telebot import types
 
-
-TOKEN = "1199831274:AAHCE9tcd6OwetOKtvfv2KwVpj9bPcZfdgM"
+# Место для API токена телеграм бота
+TOKEN = ""
 bot = telebot.TeleBot(TOKEN)
 
-
+# Выполняется при старте 
 @bot.message_handler(commands=['start'])
 def welcome(message):
+	# Отслеживание того, кто включил бот
 	name = message.from_user.username
 	fir = message.from_user.first_name
 	id = message.from_user.id
+	# Вывод этих данных в консоль 
 	print("\nSTART\n\n" + "User ID: " + str(id) + "\nFirst name: " + fir + "\nUsername: " + str(name) + "\n")
 
-	markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-	btn = types.KeyboardButton("🔮 Получить гороскоп 🔮")
-	markup.add(btn)
-
+	markup = types.ReplyKeyboardMarkup(resize_keyboard=True) # Создаём клавиатуру
+	btn = types.KeyboardButton("🔮 Получить гороскоп 🔮") # Создаем кнопку
+	markup.add(btn) # Добавляем кнопку в клавиатуру
+	# Приветствие
 	bot.send_message(message.chat.id, "Добро пожаловать, {0.first_name}!".format(message.from_user, bot.get_me()),
 	    parse_mode='html', reply_markup=markup)
  
 
 
 @bot.message_handler(content_types=['text'])
-def lalala(message): 
+def Inline_keyboard(message): 
 	if message.chat.type == 'private':
-		if message.text == '🔮 Получить гороскоп 🔮':
-			markup = types.InlineKeyboardMarkup(row_width=1)
+		if message.text == '🔮 Получить гороскоп 🔮': 
+			markup = types.InlineKeyboardMarkup(row_width=1) # Создаём инлайн клавиатуру
+			# Создаём кнопки для инлайн клавиатуры 
 			item1 = types.InlineKeyboardButton("Овен ♈", callback_data='aries')
 			item2 = types.InlineKeyboardButton("Телец ♉", callback_data='taurus')
 			item3 = types.InlineKeyboardButton("Близнецы ♊", callback_data='gemini')
@@ -44,7 +47,9 @@ def lalala(message):
 			item10 = types.InlineKeyboardButton("Козерог ♑", callback_data='capricorn')
 			item11 = types.InlineKeyboardButton("Водолей ♒", callback_data='aquarius')
 			item12 = types.InlineKeyboardButton("Рыбы ♓", callback_data='pisces')
+			# Наполняем клавиатуру кнопками
 			markup.add(item1, item2, item3,item4,item5,item6,item7,item8,item9,item10,item11,item12)
+			# Передаём инлайн клавиатуру в это сообщение
 			bot.send_message(message.chat.id, 'Кто вы по гороскопу?', reply_markup=markup)
 
 		else:
@@ -52,10 +57,11 @@ def lalala(message):
 
 
 @bot.callback_query_handler(func=lambda call: True)
-def goroskop(call):
-	
+def goroskop(call):	
 	try:
 		if call.message:
+			# Отслеживание выбраного знака зодиака
+			# И в зависимости от выбора даётся нужная ссылка на страничку сайта с нужным знаком зодиака
 			if call.data == "aries":
 				url = "https://orakul.com/horoscope/astrologic/general/aries/today.html"
 			elif call.data == "taurus":
@@ -81,16 +87,19 @@ def goroskop(call):
 			elif call.data == "pisces":
 				url = "https://orakul.com/horoscope/astrologic/general/pisces/today.html"
 
-			api = requests.get(url)
-			tree = lxml.html.document_fromstring(api.text)
-			text = tree.xpath('///*[@id="content"]/div[1]/div[1]/div[1]/div[2]/div[4]/p[1]/text()')
-			text = str(text[0])
-			bot.send_message(call.message.chat.id, text)
-			print(text)
-	
+			api = requests.get(url) # Переход по ссылке
+			tree = lxml.html.document_fromstring(api.text) # Забыл что это делает, но без него не работает
+			text = tree.xpath('///*[@id="content"]/div[1]/div[1]/div[1]/div[2]/div[4]/p[1]/text()') # Берём текст из этого элемента
+			text = str(text[0]) # Превращаем список в строку. Это текст гороскопа
+			bot.send_message(call.message.chat.id, text) # Печатаем текст гороскопа юзверю
+			print(text) # Ну и себе выводим. Ведь нужно же следить за тем, кто что делает
+			# P.S. Можно было бы сделать так, что бы в терминале выводило не только, что кому-то пришло, а ещё и юзверя, которому это пришло
+			# Но будет выводить данные бота, а не юзверя. Может это Я что-то не так сделал
+			
+	# Отслеживаем ошибки
 	except Exception as e:
 	    print(repr(e))
 
 
-# RUN
+# Запуск
 bot.polling(none_stop=True)
